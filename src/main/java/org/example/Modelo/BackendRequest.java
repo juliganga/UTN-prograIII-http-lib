@@ -2,13 +2,11 @@ package org.example.Modelo;
 
 import com.google.gson.*;
 import org.example.Exceptions.BadRequestException;
+import org.example.Exceptions.IncorrectRequestType;
 
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 
 /**
@@ -78,7 +76,7 @@ public class BackendRequest {
      * @throws BadRequestException En caso de que el servidor lanze un error HTTP, se lanzara una excepcion
      * @throws IOException
      */
-    public String searchData(GetRequestType requestType) throws BadRequestException, IOException {
+    public String searchData(GetRequestType requestType) throws BadRequestException, IOException, IncorrectRequestType {
         HttpURLConnection con = startRequest("GET");
         checkHTTPCode(con);
 
@@ -95,16 +93,21 @@ public class BackendRequest {
 
         String info = "";
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        if(requestType == GetRequestType.OBJECT)
-        {
-            JsonObject jsonObject = JsonParser.parseString(response.toString()).getAsJsonObject(); // solo funciona con un solo objeto
-            info = gson.toJson(jsonObject);
-        }
+        try {
+            if(requestType == GetRequestType.OBJECT)
+            {
+                JsonObject jsonObject = JsonParser.parseString(response.toString()).getAsJsonObject(); // solo funciona con un solo objeto
+                info = gson.toJson(jsonObject);
+            }
 
-        if(requestType == GetRequestType.ARRAY)
+            if(requestType == GetRequestType.ARRAY)
+            {
+                JsonArray jsonArray = JsonParser.parseString(response.toString()).getAsJsonArray();
+                info = gson.toJson(jsonArray);
+            }
+        } catch (IllegalStateException e)
         {
-            JsonArray jsonArray = JsonParser.parseString(response.toString()).getAsJsonArray();
-            info = gson.toJson(jsonArray);
+            throw new IncorrectRequestType("ERROR: El tipo de datos recividos no es el tipo esperado");
         }
 
         return info;
