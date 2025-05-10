@@ -6,7 +6,9 @@ import org.example.Exceptions.IncorrectRequestType;
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 
 /**
@@ -21,9 +23,9 @@ import java.nio.charset.StandardCharsets;
  * @see #makeChangeViaForm(JsonObject, String)
  */
 public class BackendRequest {
+
     private String url;
     final private String user_agent = "Mozilla/5.0";
-
 
     /**
      * Genera un objeto que puede hacer un pedido a un servidor.
@@ -38,106 +40,83 @@ public class BackendRequest {
         this.url = url + endpoint;
     }
 
-
     /**
-     * Crea un objeto {@link java.net.HttpURLConnection HttpURLConnection} para comenzar a realizar una transacción de cualquier tipo
-     * @param type Tipo de metodo HTTP <ul>
-     *             <li>POST</li>
-     *             <li>GET</li>
-     *             <li>PUT</li>
-     *             <li>DELETE</li>
-     * </ul>
-     * @return {@link java.net.HttpURLConnection HttpURLConnection} Un pedido HTTP
-     * @throws BadRequestException
-     */
-    private HttpURLConnection startRequest(String type) throws BadRequestException
-    {
-        HttpURLConnection con = null;
-        try {
-            URL obj = URI.create(url).toURL();
-            con = (HttpURLConnection) obj.openConnection();
-            con.setRequestMethod(type);
-            con.setRequestProperty("User-Agent", user_agent);
-            con.setRequestProperty("Content-Type","application/json");
-        } catch (IOException e)
-        {
-            throw new BadRequestException("Hubo un error conectandose al servidor:\n" + e.getMessage());
-        }
-
-
-        return con;
-    }
-
-
-    /**
-     * Un metodo que se usa para buscar y luego mostrar datos recividos del servidor.
-     * @param requestType El tipo de dato que se espera recivir del servidor, aplica formato
-     * @return La información recivida
+     * Un metodo que se usa para buscar datos en el servidor.
+     * @return La información recibida en formato JSON
      * @throws BadRequestException En caso de que el servidor lanze un error HTTP, se lanzara una excepcion
      * @throws IOException
+     * @throws InterruptedException
      */
-    public String searchData(GetRequestType requestType) throws BadRequestException, IOException, IncorrectRequestType {
-        HttpURLConnection con = startRequest("GET");
-        checkHTTPCode(con);
+    public String searchData() throws BadRequestException, IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("User-Agent", user_agent)
+                .header("Content-Type", "application/json")
+                .build();
 
+        HttpResponse<InputStream> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofInputStream());
 
-        StringBuilder response = new StringBuilder();
-        BufferedReader data_recieved = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        checkHTTPCode(response);
+
+        BufferedReader responseBodyStream = new BufferedReader(new InputStreamReader(response.body()));
+        StringBuilder responseContent = new StringBuilder();
         String inputLine;
 
-        while ((inputLine = data_recieved.readLine()) != null) {
-            response.append(inputLine);
+        while ((inputLine = responseBodyStream.readLine()) != null) {
+            responseContent.append(inputLine);
         }
-        data_recieved.close();
+        responseBodyStream.close();
 
+        return responseContent.toString();
+    }
 
+    /**
+     * Un metodo que se usa para mostrar datos recibidos del servidor de manera legible.
+     *
+     * @param requestType El tipo de dato que se espera recibir del servidor, aplica formato
+     * @return La información recibida con el formato dado
+     * @throws IncorrectRequestType En caso de que el formato de datos recibidos no sea el especificado por parametro
+     */
+    public String prettifyData(String responseContent, GetRequestType requestType) throws IncorrectRequestType {
         String info = "";
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try {
-            if(requestType == GetRequestType.OBJECT)
-            {
-                JsonObject jsonObject = JsonParser.parseString(response.toString()).getAsJsonObject(); // solo funciona con un solo objeto
+            if (requestType == GetRequestType.OBJECT) {
+                JsonObject jsonObject = JsonParser.parseString(responseContent).getAsJsonObject(); // solo funciona con un solo objeto
                 info = gson.toJson(jsonObject);
             }
 
-            if(requestType == GetRequestType.ARRAY)
-            {
-                JsonArray jsonArray = JsonParser.parseString(response.toString()).getAsJsonArray();
+            if (requestType == GetRequestType.ARRAY) {
+                JsonArray jsonArray = JsonParser.parseString(responseContent).getAsJsonArray();
                 info = gson.toJson(jsonArray);
             }
-        } catch (IllegalStateException e)
-        {
-            throw new IncorrectRequestType("ERROR: El tipo de datos recividos no es el tipo esperado");
+        } catch (IllegalStateException e) {
+            throw new IncorrectRequestType("ERROR: El tipo de datos recibidos no es el tipo esperado");
         }
 
         return info;
     }
 
-
     /**
      * <p>Este metodo se usa para cualquier tipo de request que no sea GET y necesite de un tipo de formulario.</p>
      * <p>Apropiado para UPDATE</p>
      * @param requestBody Un objeto JSON que contiene el cuerpo del request
-     * @param request_method Un metodo HTTP, PUT, DELETE, UPDATE
+     * @param requestMethod Un metodo HTTP, PUT, DELETE, UPDATE
      * @throws BadRequestException En caso de que el servidor lanze un error HTTP, se lanzara una excepcion
      * @throws IOException
+     * @throws InterruptedException
      */
-    public void makeChangeViaForm(JsonObject requestBody, String request_method) throws BadRequestException, IOException
-    {
-        HttpURLConnection con = startRequest(request_method);
-        con.setDoOutput(true);
-        con.setDoInput(true);
+    public void makeChangeViaForm(JsonObject requestBody, String requestMethod) throws BadRequestException, IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .method(requestMethod, HttpRequest.BodyPublishers.ofString(requestBody.toString()))
+                .header("User-Agent", user_agent)
+                .header("Content-Type","application/json; charset=utf-8")
+                .build();
 
+        HttpResponse<InputStream> response = HttpClient.newHttpClient().send(request,HttpResponse.BodyHandlers.ofInputStream());
 
-        OutputStream os = con.getOutputStream();
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8));
-        writer.write(requestBody.toString());
-        writer.flush();
-        writer.close();
-        os.close();
-        con.connect();
-
-        checkHTTPCode(con);
+        checkHTTPCode(response);
     }
 
 
@@ -148,32 +127,33 @@ public class BackendRequest {
      *     http://localhost:8080/nombres/1
      * </pre></blockquote>
      * <p>Un UPDATE con uno o mas parametros.</p>
-     * @param request_method Un metodo HTTP, PUT, DELETE, UPDATE
+     * @param requestMethod Un metodo HTTP, PUT, DELETE, UPDATE
      * @throws BadRequestException En caso de que el servidor lanze un error HTTP, se lanzara una excepcion
      * @throws IOException
+     * @throws InterruptedException
      */
-    public void makeChangeByParam(String request_method) throws BadRequestException, IOException
-    {
-        HttpURLConnection con = startRequest(request_method);
-        con.setDoOutput(true);
-        con.setDoInput(true);
-        con.connect();
+    public void makeChangeByParam(String requestMethod) throws BadRequestException, IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .method(requestMethod, HttpRequest.BodyPublishers.noBody())
+                .header("User-Agent", user_agent)
+                .header("Content-Type", "application/json")
+                .build();
 
-        checkHTTPCode(con);
+        HttpResponse<Void> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.discarding());
+
+        checkHTTPCode(response);
     }
 
     /**
-     * Revisa el estado HTTP que el servidor lanza
-     * @param connection la conexion al servidor
-     * @throws IOException
-     * @throws BadRequestException
+     * Revisa el estado HTTP que el servidor lanza al enviar una request
+     * @param response La respuesta del servidor al request enviado
+     * @throws BadRequestException Si hay algun error de conexion
      */
-    public void checkHTTPCode(HttpURLConnection connection) throws IOException, BadRequestException
-    {
-        int responseCode = connection.getResponseCode();
+    public void checkHTTPCode(HttpResponse response) throws BadRequestException {
+        int responseCode = response.statusCode();
 
-        if(responseCode != HttpURLConnection.HTTP_OK)
-        {
+        if (responseCode != HttpURLConnection.HTTP_OK) {
             throw new BadRequestException("Hubo un error de conexion al servicio.\nHTTP: " + responseCode);
         }
     }
