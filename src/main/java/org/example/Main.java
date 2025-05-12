@@ -10,7 +10,7 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) {
         //BackendRequest pedido = new BackendRequest("https://postman-echo.com","/get");
-        BackendRequest pedido2 = new BackendRequest("https://postman-echo.com","/get");
+        BackendRequest pedido2 = new BackendRequest("https://postman-echo.com","/hello");
         try {
             //System.out.println(pedido2.searchData(GetRequestType.ARRAY));
             //JsonObject object = new JsonObject();
