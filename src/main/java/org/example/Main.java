@@ -2,8 +2,8 @@ package org.example;
 
 import org.example.Exceptions.BadRequestException;
 import org.example.Exceptions.IncorrectRequestType;
-import org.example.Modelo.BackendRequest;
-import org.example.Modelo.GetRequestType;
+import org.example.Model.BackendRequest;
+import org.example.Model.GetRequestType;
 
 import java.io.IOException;
 

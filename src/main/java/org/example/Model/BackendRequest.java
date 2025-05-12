@@ -1,4 +1,4 @@
-package org.example.Modelo;
+package org.example.Model;
 
 import com.google.gson.*;
 import org.example.Exceptions.BadRequestException;

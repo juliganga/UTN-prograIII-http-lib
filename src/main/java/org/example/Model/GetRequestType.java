@@ -1,4 +1,4 @@
-package org.example.Modelo;
+package org.example.Model;
 
 /**
  * Un enum que denota que tipo de dato se espera recibir, para aplicar un formato JSON
