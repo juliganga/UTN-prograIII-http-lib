@@ -1,9 +1,7 @@
-package org.example.Model;
+package org.juliganga.Model;
 
-import com.google.gson.*;
-import org.example.Exceptions.BadRequestException;
-import org.example.Exceptions.IncorrectRequestType;
-
+import org.juliganga.Exceptions.BadRequestException;
+import org.json.*;
 import java.io.*;
 import java.net.*;
 import java.net.http.HttpClient;
@@ -17,10 +15,10 @@ import java.net.http.HttpResponse;
  * <ul>
  *     <li>Usar un endpoint de GET con todos sus datos, o de un solo ID</li>
  *     <li>Usar un endpoint de DELETE que tiene un parametro de ID</li>
- *     <li>Usar metodos PUT O POST para agregar/modificar datos de un objeto usando {@link com.google.gson.JsonObject}</li>
+ *     <li>Usar metodos PUT O POST para agregar/modificar datos de un objeto usando {@link org.json.JSONObject}</li>
  * </ul>
  * @see #makeChangeByParam(String)
- * @see #makeChangeViaForm(JsonObject, String)
+ * @see #makeChangeViaForm(JSONObject, String)
  */
 public class BackendRequest {
 
@@ -70,32 +68,6 @@ public class BackendRequest {
         return responseContent.toString();
     }
 
-    /**
-     * Un metodo que se usa para mostrar datos recibidos del servidor de manera legible.
-     *
-     * @param requestType El tipo de dato que se espera recibir del servidor, aplica formato
-     * @return La información recibida con el formato dado
-     * @throws IncorrectRequestType En caso de que el formato de datos recibidos no sea el especificado por parametro
-     */
-    public String prettifyData(String responseContent, GetRequestType requestType) throws IncorrectRequestType {
-        String info = "";
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        try {
-            if (requestType == GetRequestType.OBJECT) {
-                JsonObject jsonObject = JsonParser.parseString(responseContent).getAsJsonObject(); // solo funciona con un solo objeto
-                info = gson.toJson(jsonObject);
-            }
-
-            if (requestType == GetRequestType.ARRAY) {
-                JsonArray jsonArray = JsonParser.parseString(responseContent).getAsJsonArray();
-                info = gson.toJson(jsonArray);
-            }
-        } catch (IllegalStateException e) {
-            throw new IncorrectRequestType("ERROR: El tipo de datos recibidos no es el tipo esperado");
-        }
-
-        return info;
-    }
 
     /**
      * <p>Este metodo se usa para cualquier tipo de request que no sea GET y necesite de un tipo de formulario.</p>
@@ -106,7 +78,7 @@ public class BackendRequest {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void makeChangeViaForm(JsonObject requestBody, String requestMethod) throws BadRequestException, IOException, InterruptedException {
+    public void makeChangeViaForm(JSONObject requestBody, String requestMethod) throws BadRequestException, IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .method(requestMethod, HttpRequest.BodyPublishers.ofString(requestBody.toString()))
@@ -142,6 +114,7 @@ public class BackendRequest {
 
         HttpResponse<Void> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.discarding());
 
+
         checkHTTPCode(response);
     }
 
@@ -150,7 +123,7 @@ public class BackendRequest {
      * @param response La respuesta del servidor al request enviado
      * @throws BadRequestException Si hay algun error de conexion
      */
-    public void checkHTTPCode(HttpResponse response) throws BadRequestException {
+    private void checkHTTPCode(HttpResponse response) throws BadRequestException {
         int responseCode = response.statusCode();
 
         if (responseCode != HttpURLConnection.HTTP_OK) {
