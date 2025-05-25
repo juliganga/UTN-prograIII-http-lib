@@ -126,7 +126,7 @@ public class BackendRequest {
     private void checkHTTPCode(HttpResponse response) throws BadRequestException {
         int responseCode = response.statusCode();
 
-        if (responseCode != HttpURLConnection.HTTP_OK) {
+        if (!(responseCode >= 200 && responseCode <= 299)) {
             throw new BadRequestException("Hubo un error de conexion al servicio.\nHTTP: " + responseCode);
         }
     }
