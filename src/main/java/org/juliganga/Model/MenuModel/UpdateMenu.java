@@ -1,4 +1,4 @@
-package org.juliganga.Model;
+package org.juliganga.Model.MenuModel;
 
 import org.json.JSONObject;
 import org.juliganga.Exceptions.NonExistantOptionException;
@@ -7,12 +7,19 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.RecursiveTask;
 
+/** <h1>Esto está abandonado.</h1>
+ *
+ * @deprecated
+ * Esto está abandonado. No se hará un frontend en este programa.
+ *
+ * */
+@Deprecated
 public class UpdateMenu {
     private Map<Integer, MenuOption> menuOptionMap;
     private JSONObject jsonObject;
 
+    @Deprecated
     public UpdateMenu(JSONObject jsonObject) {
         this.jsonObject = jsonObject;
         this.menuOptionMap = createMenuHashMap(jsonObject);

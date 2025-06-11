@@ -1,17 +1,26 @@
-package org.juliganga.Model;
+package org.juliganga.Model.MenuModel;
 
+/** <h1>Esto está abandonado.</h1>
+ *
+ * @deprecated
+ * Esto está abandonado. No se hará un frontend en este programa.
+ *
+ * */
+@Deprecated
 public class MenuOption {
     private String parent = null;
     private String option;
     final private Class type;
 
 
+    @Deprecated
     public MenuOption(String parent, String option, Class type) {
         this.parent = parent;
         this.option = option;
         this.type = type;
     }
 
+    @Deprecated
     public MenuOption(String option, Class type) {
         this.option = option;
         this.type = type;
