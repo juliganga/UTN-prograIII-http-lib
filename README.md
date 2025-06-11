@@ -1,6 +1,5 @@
 # Para que es esto?
-
-Este software sirve para servir como cliente que consume una API de un servidor fuera de este programa. Es un complemento para darle forma al sistema.
+Esta libreria permite hacer pedidos HTTP hacia otras APIs
 
 # Que puede hacer?
 Se puede utilizar de las siguientes maneras por ejemplo:
