@@ -1,4 +1,4 @@
-package org.juliganga.Model;
+package org.juliganga.Model.Request;
 
 import org.json.JSONArray;
 import org.json.JSONException;

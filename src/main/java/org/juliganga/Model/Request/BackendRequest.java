@@ -1,4 +1,4 @@
-package org.juliganga.Model;
+package org.juliganga.Model.Request;
 
 import org.juliganga.Exceptions.BadRequestException;
 import org.json.*;
@@ -7,6 +7,7 @@ import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Scanner;
 
 
 /**
@@ -125,9 +126,20 @@ public class BackendRequest {
      */
     private void checkHTTPCode(HttpResponse response) throws BadRequestException {
         int responseCode = response.statusCode();
+        StringBuilder responseBody = new StringBuilder();
+        InputStream bodyStream = (InputStream) response.body();
 
-        if (responseCode != HttpURLConnection.HTTP_OK) {
-            throw new BadRequestException("Hubo un error de conexion al servicio.\nHTTP: " + responseCode);
+        if (!(responseCode >= 200 && responseCode <= 299)) {
+            Scanner scanner = new Scanner(bodyStream);
+
+            while (scanner.hasNext())
+            {
+                responseBody.append(scanner.useDelimiter("\\A").next());
+            }
+
+            scanner.close();
+
+            throw new BadRequestException("Hubo un error de conexion al servicio.\n" + responseBody,responseCode);
         }
     }
 }

@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.juliganga</groupId>
-    <artifactId>httpclient-json</artifactId>
+    <artifactId>backend-request-maker</artifactId>
     <version>1.0</version>
 
     <properties>
@@ -22,4 +22,37 @@
             <version>20250517</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>**/Model/</include>
+                        <include>**/Exceptions/</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/MenuModel/</exclude>
+                        <exclude>**/Exceptions/NonExistantOptionException.class</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+
 </project>
